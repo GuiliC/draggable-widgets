@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const WIDGET_LIST = [
   { id: "a", content: "A", size: 1 },
@@ -23,6 +23,7 @@ function Widget({ content, onDragStart, size, onResize, maxSize }) {
 
   return (
     <div
+      data-widget
       style={{
         backgroundColor: "#eeeeee",
         borderRadius: "5px",
@@ -31,6 +32,7 @@ function Widget({ content, onDragStart, size, onResize, maxSize }) {
         gridTemplateRows: "1fr auto",
         alignItems: "stretch",
         fontSize: "2rem",
+        position: "relative",
       }}
       onDragStart={onDragStart}
       draggable
@@ -120,6 +122,19 @@ export function Dashboard() {
   const [widgets, setWidgets] = useState(WIDGET_LIST);
   const [draggedItemId, setDraggedItemId] = useState(null);
   const [draggedOverContainerId, setDraggedOverContainerId] = useState(null);
+  const containerRef = useRef(null);
+  const [columnWidth, setColumnWidth] = useState(0);
+
+  useEffect(() => {
+    const updateColumnWidth = () => {
+      if (!containerRef.current) return;
+      setColumnWidth(containerRef.current.offsetWidth / GRID_COLUMNS);
+    };
+
+    updateColumnWidth();
+    window.addEventListener("resize", updateColumnWidth);
+    return () => window.removeEventListener("resize", updateColumnWidth);
+  }, []);
 
   const handleDragStart = (id) => setDraggedItemId(id);
   const handleDragEntered = (id) => setDraggedOverContainerId(id);
@@ -159,6 +174,7 @@ export function Dashboard() {
         gridTemplateColumns: `repeat(${GRID_COLUMNS}, 1fr)`,
         gridGap: "1rem",
       }}
+      ref={containerRef}
     >
       {widgets.map((w, i) => (
         <WidgetContainer
