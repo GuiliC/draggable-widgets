@@ -13,22 +13,73 @@ const WIDGET_LIST = [
   { id: "j", content: "J", size: 1 },
 ];
 
-function Widget({ content, onDragStart }) {
+function Widget({ content, onDragStart, size, onResize, maxSize }) {
+  const handleResize = (event) => {
+    event.stopPropagation();
+    onResize(Number(event.target.value));
+  };
+
+  const stopDrag = (event) => event.stopPropagation();
+
   return (
     <div
       style={{
         backgroundColor: "#eeeeee",
         borderRadius: "5px",
         minHeight: "5rem",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
+        display: "grid",
+        gridTemplateRows: "1fr auto",
+        alignItems: "stretch",
         fontSize: "2rem",
       }}
       onDragStart={onDragStart}
       draggable
     >
-      {content}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {content}
+      </div>
+      <div
+        onMouseDown={stopDrag}
+        onClick={stopDrag}
+        style={{
+          fontSize: "0.9rem",
+          padding: "0.5rem 0.75rem",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.75rem",
+          backgroundColor: "#dfe4ea",
+          borderRadius: "0 0 5px 5px",
+          boxSizing: "border-box",
+          borderTop: "1px solid #c8d6e5",
+        }}
+      >
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            fontSize: "0.85rem",
+          }}
+        >
+          <span style={{ color: "#57606a" }}>Tamaño</span>
+          <input
+            type="range"
+            min={1}
+            max={maxSize}
+            value={size}
+            onChange={handleResize}
+          />
+        </label>
+        <span style={{ color: "#57606a", fontSize: "0.8rem" }}>
+          {size} / {maxSize} columnas
+        </span>
+      </div>
     </div>
   );
 }
@@ -65,6 +116,7 @@ function WidgetContainer({
 }
 
 export function Dashboard() {
+  const GRID_COLUMNS = 3;
   const [widgets, setWidgets] = useState(WIDGET_LIST);
   const [draggedItemId, setDraggedItemId] = useState(null);
   const [draggedOverContainerId, setDraggedOverContainerId] = useState(null);
@@ -91,11 +143,20 @@ export function Dashboard() {
     setDraggedOverContainerId(null);
   };
 
+  const handleResize = (id, newSize) => {
+    const nextSize = Math.min(GRID_COLUMNS, Math.max(1, newSize));
+    setWidgets((current) =>
+      current.map((widget) =>
+        widget.id === id ? { ...widget, size: nextSize } : widget
+      )
+    );
+  };
+
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr",
+        gridTemplateColumns: `repeat(${GRID_COLUMNS}, 1fr)`,
         gridGap: "1rem",
       }}
     >
@@ -110,7 +171,10 @@ export function Dashboard() {
         >
           <Widget
             content={w.content}
+            size={w.size}
+            maxSize={GRID_COLUMNS}
             onDragStart={() => handleDragStart(w.id)}
+            onResize={(value) => handleResize(w.id, value)}
           />
         </WidgetContainer>
       ))}
