@@ -13,35 +13,13 @@ const WIDGET_LIST = [
   { id: "j", content: "J", size: 1 },
 ];
 
-function Widget({ content, onDragStart, size, onResize, maxSize, columnWidth }) {
-  const stopDrag = (event) => event.stopPropagation();
-
-  const startResizeDrag = (event) => {
+function Widget({ content, onDragStart, size, onResize, maxSize }) {
+  const handleResize = (event) => {
     event.stopPropagation();
-    event.preventDefault();
-
-    const widgetElement = event.currentTarget.closest("[data-widget]");
-    const startingWidth =
-      widgetElement?.getBoundingClientRect().width || columnWidth * size || 1;
-    const effectiveColumnWidth = columnWidth || startingWidth / size || 1;
-    const startX = event.clientX;
-
-    const handleMouseMove = (moveEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const newWidth = startingWidth + deltaX;
-      const nextSize = Math.round(newWidth / effectiveColumnWidth);
-      const clamped = Math.min(maxSize, Math.max(1, nextSize));
-      onResize(clamped);
-    };
-
-    const handleMouseUp = () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    onResize(Number(event.target.value));
   };
+
+  const stopDrag = (event) => event.stopPropagation();
 
   return (
     <div
@@ -76,47 +54,33 @@ function Widget({ content, onDragStart, size, onResize, maxSize, columnWidth }) 
           padding: "0.5rem 0.75rem",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
           gap: "0.75rem",
           backgroundColor: "#dfe4ea",
           borderRadius: "0 0 5px 5px",
           boxSizing: "border-box",
           borderTop: "1px solid #c8d6e5",
-          userSelect: "none",
         }}
       >
-        <span style={{ color: "#57606a", fontSize: "0.8rem" }}>
-          Tamaño: {size} / {maxSize} columnas
-        </span>
-        <button
-          onMouseDown={startResizeDrag}
-          aria-label="Arrastra para cambiar el tamaño"
+        <label
           style={{
-            width: "1.5rem",
-            height: "1.5rem",
-            border: "1px solid #c8d6e5",
-            borderRadius: "4px",
-            background: "linear-gradient(135deg, transparent 50%, #ced6e0 50%)",
-            backgroundColor: "#f1f2f6",
-            cursor: "se-resize",
-            position: "relative",
-            padding: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            fontSize: "0.85rem",
           }}
         >
-          <span
-            aria-hidden
-            style={{
-              position: "absolute",
-              bottom: "0.25rem",
-              right: "0.25rem",
-              width: "0.75rem",
-              height: "0.75rem",
-              borderRight: "2px solid #a4b0be",
-              borderBottom: "2px solid #a4b0be",
-              boxSizing: "border-box",
-            }}
+          <span style={{ color: "#57606a" }}>Tamaño</span>
+          <input
+            type="range"
+            min={1}
+            max={maxSize}
+            value={size}
+            onChange={handleResize}
           />
-        </button>
+        </label>
+        <span style={{ color: "#57606a", fontSize: "0.8rem" }}>
+          {size} / {maxSize} columnas
+        </span>
       </div>
     </div>
   );
@@ -227,7 +191,6 @@ export function Dashboard() {
             maxSize={GRID_COLUMNS}
             onDragStart={() => handleDragStart(w.id)}
             onResize={(value) => handleResize(w.id, value)}
-            columnWidth={columnWidth}
           />
         </WidgetContainer>
       ))}
